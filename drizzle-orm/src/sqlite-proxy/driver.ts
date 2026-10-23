@@ -27,6 +27,18 @@ export class SqliteRemoteDatabase<
 	}
 }
 
+/**
+ * Executes a query on the remote database.
+ *
+ * Rows must be positional arrays of column values, in the same order as the columns in `sql`:
+ * - `all` / `values`: `rows` is an array of rows, e.g. `[[1, 'John'], [2, 'Jane']]`
+ * - `get`: `rows` is a single row, e.g. `[1, 'John']`, or `undefined` if there is no row
+ * - `run`: `rows` is ignored
+ *
+ * Do not convert object rows with `Object.values()`: columns with the same name
+ * (e.g. `"users"."id"` and `"teams"."id"` in a join) collapse into one key and the values get misaligned.
+ * Use a driver API that returns arrays instead (e.g. `stmt.raw()` in D1, or the `/raw` endpoint of the D1 HTTP API).
+ */
 export type AsyncRemoteCallback = (
 	sql: string,
 	params: any[],

@@ -140,6 +140,14 @@ export class SQLiteProxyTransaction<
 	}
 }
 
+function assertArrayRow(row: unknown): void {
+	if (!Array.isArray(row)) {
+		throw new Error(
+			`sqlite-proxy callback must return rows as arrays of column values, got ${row === null ? 'null' : typeof row}`,
+		);
+	}
+}
+
 export class RemotePreparedQuery<T extends PreparedQueryConfig = PreparedQueryConfig> extends SQLitePreparedQuery<
 	{ type: 'async'; run: SqliteRemoteResult; all: T['all']; get: T['get']; values: T['values']; execute: T['execute'] }
 > {
@@ -190,6 +198,10 @@ export class RemotePreparedQuery<T extends PreparedQueryConfig = PreparedQueryCo
 		if (!this.fields && !this.customResultMapper) {
 			return rows;
 		}
+
+		// Rows share one shape, so checking the first row is enough
+		const [firstRow] = rows as unknown[];
+		if (firstRow !== undefined) assertArrayRow(firstRow);
 
 		if (this.customResultMapper) {
 			return this.customResultMapper(rows as unknown[][]) as T['all'];
@@ -243,6 +255,8 @@ export class RemotePreparedQuery<T extends PreparedQueryConfig = PreparedQueryCo
 		if (!row) {
 			return undefined;
 		}
+
+		assertArrayRow(row);
 
 		if (this.customResultMapper) {
 			return this.customResultMapper([rows] as unknown[][]) as T['get'];
